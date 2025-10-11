@@ -36,14 +36,23 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/unrealircd/unrealircd-rpc-go"
 )
 
 func main() {
-	apiLogin := "api:apiPASSWORD" // same as in the rpc-user block in UnrealIRCd
+	apiLogin := os.Getenv("UNREALIRCD_API_LOGIN")
+	if apiLogin == "" {
+		log.Fatal("UNREALIRCD_API_LOGIN environment variable must be set")
+	}
 
-	conn, err := unrealircd.NewConnection("wss://127.0.0.1:8600/", apiLogin, &unrealircd.Options{
+	wsURL := os.Getenv("UNREALIRCD_WS_URL")
+	if wsURL == "" {
+		wsURL = "wss://127.0.0.1:8600/" // default
+	}
+
+	conn, err := unrealircd.NewConnection(wsURL, apiLogin, &unrealircd.Options{
 		TLSVerify: false,
 	})
 	if err != nil {
@@ -85,6 +94,20 @@ If the example does not work, then make sure you have configured your
 UnrealIRCd correctly, with the same API username and password you use
 here, with an allowed IP, and changing the `wss://127.0.0.1:8600/` too
 if needed.
+
+## Environment Variables
+
+The library supports configuration via environment variables:
+
+- `UNREALIRCD_API_LOGIN`: API credentials in the format `username:password` (required)
+- `UNREALIRCD_WS_URL`: WebSocket URL for the UnrealIRCd RPC server (optional, defaults to `wss://127.0.0.1:8600/`)
+
+Example usage:
+```bash
+export UNREALIRCD_API_LOGIN="api:mySecurePassword"
+export UNREALIRCD_WS_URL="wss://irc.example.com:8600/"
+go run main.go
+```
 
 ## Custom Queries
 
