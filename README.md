@@ -3,9 +3,6 @@
 This allows Go programs to control [UnrealIRCd](https://www.unrealircd.org/)
 via the [JSON-RPC interface](https://www.unrealircd.org/docs/JSON-RPC).
 
-This library is used by the
-[UnrealIRCd webpanel](https://github.com/unrealircd/unrealircd-webpanel/).
-
 If you are interested in helping out or would like to discuss API
 capabilities, join us at `#unreal-webpanel` at `irc.unrealircd.org`
 (IRC with TLS on port 6697).
