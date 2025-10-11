@@ -85,3 +85,36 @@ If the example does not work, then make sure you have configured your
 UnrealIRCd correctly, with the same API username and password you use
 here, with an allowed IP, and changing the `wss://127.0.0.1:8600/` too
 if needed.
+
+## Custom Queries
+
+All the convenience methods (like `conn.User().GetAll()`) internally use the `Connection.Query()` method, which is the main wrapper for sending JSON-RPC requests to UnrealIRCd.
+
+You can use `Connection.Query()` directly for any RPC method that isn't covered by the convenience methods, or for custom implementations:
+
+```go
+// Example: Get server uptime (custom query)
+uptime, err := conn.Query("server.get", map[string]interface{}{
+    "server": "irc.example.com",
+}, false)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Example: Send a raw JSON-RPC request
+result, err := conn.Query("stats.get", map[string]interface{}{
+    "object_detail_level": 2,
+}, false)
+
+// Example: Asynchronous query (no wait for response)
+err = conn.Query("log.subscribe", map[string]interface{}{
+    "sources": []string{"opers", "errors"},
+}, true) // true = noWait
+```
+
+The `Query` method parameters are:
+- `method`: The JSON-RPC method name (string)
+- `params`: Parameters for the method (map[string]interface{} or nil)
+- `noWait`: If true, sends the request but doesn't wait for a response (bool)
+
+All responses are returned as `interface{}`, which you can type-assert to the expected type (usually `map[string]interface{}` for objects or `[]interface{}` for arrays).
