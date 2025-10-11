@@ -42,10 +42,12 @@ import (
 )
 
 func main() {
-	apiLogin := os.Getenv("UNREALIRCD_API_LOGIN")
-	if apiLogin == "" {
-		log.Fatal("UNREALIRCD_API_LOGIN environment variable must be set")
+	username := os.Getenv("UNREALIRCD_API_USERNAME")
+	password := os.Getenv("UNREALIRCD_API_PASSWORD")
+	if username == "" || password == "" {
+		log.Fatal("UNREALIRCD_API_USERNAME and UNREALIRCD_API_PASSWORD environment variables must be set")
 	}
+	apiLogin := username + ":" + password
 
 	wsURL := os.Getenv("UNREALIRCD_WS_URL")
 	if wsURL == "" {
@@ -99,12 +101,14 @@ if needed.
 
 The library supports configuration via environment variables:
 
-- `UNREALIRCD_API_LOGIN`: API credentials in the format `username:password` (required)
+- `UNREALIRCD_API_USERNAME`: API username (required)
+- `UNREALIRCD_API_PASSWORD`: API password (required)
 - `UNREALIRCD_WS_URL`: WebSocket URL for the UnrealIRCd RPC server (optional, defaults to `wss://127.0.0.1:8600/`)
 
 Example usage:
 ```bash
-export UNREALIRCD_API_LOGIN="api:mySecurePassword"
+export UNREALIRCD_API_USERNAME="api"
+export UNREALIRCD_API_PASSWORD="mySecurePassword"
 export UNREALIRCD_WS_URL="wss://irc.example.com:8600/"
 go run main.go
 ```
