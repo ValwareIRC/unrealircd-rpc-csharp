@@ -1,4 +1,4 @@
-module unrealircd-rpc-go
+module github.com/ObsidianIRC/unrealircd-rpc-golang
 
 go 1.25.2
 

@@ -10,13 +10,13 @@ capabilities, join us at `#unreal-webpanel` at `irc.unrealircd.org`
 ## Installation
 
 ```bash
-go get github.com/unrealircd/unrealircd-rpc-go
+go get github.com/ObsidianIRC/unrealircd-rpc-golang
 ```
 
 Or, if you have a local copy:
 
 ```bash
-go mod edit -replace=github.com/unrealircd/unrealircd-rpc-go=./path/to/local
+go mod edit -replace=github.com/ObsidianIRC/unrealircd-rpc-golang=./path/to/local
 go mod tidy
 ```
 
@@ -38,7 +38,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/unrealircd/unrealircd-rpc-go"
+	"github.com/ObsidianIRC/unrealircd-rpc-golang"
 )
 
 func main() {
