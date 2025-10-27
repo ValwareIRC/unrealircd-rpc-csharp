@@ -1,4 +1,5 @@
 using Moq;
+using System.Text.Json;
 using Xunit;
 using UnrealIRCdRPC;
 
@@ -20,14 +21,17 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedList = new[] { new { name = "badname1" }, new { name = "badname2" } };
-            var response = new Dictionary<string, object> { { "list", expectedList } };
-            _mockQuerier.Setup(q => q.QueryAsync("name_ban.list", null, false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { list = expectedList });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("name_ban.list", null, false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _nameBan.GetAllAsync();
 
             // Assert
-            Assert.Equal(expectedList, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Array, result.Value.ValueKind);
+            Assert.Equal(2, result.Value.GetArrayLength());
         }
 
         [Fact]
@@ -35,14 +39,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedTkl = new { id = "123" };
-            var response = new Dictionary<string, object> { { "tkl", expectedTkl } };
-            _mockQuerier.Setup(q => q.QueryAsync("name_ban.add", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { tkl = expectedTkl });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("name_ban.add", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _nameBan.AddAsync("badname", "reason", "1d", "admin");
 
             // Assert
-            Assert.Equal(expectedTkl, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("id", out var idElement));
+            Assert.Equal("123", idElement.GetString());
             _mockQuerier.Verify(q => q.QueryAsync("name_ban.add", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -51,14 +59,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedTkl = new { id = "123" };
-            var response = new Dictionary<string, object> { { "tkl", expectedTkl } };
-            _mockQuerier.Setup(q => q.QueryAsync("name_ban.del", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { tkl = expectedTkl });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("name_ban.del", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _nameBan.DeleteAsync("badname");
 
             // Assert
-            Assert.Equal(expectedTkl, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("id", out var idElement));
+            Assert.Equal("123", idElement.GetString());
             _mockQuerier.Verify(q => q.QueryAsync("name_ban.del", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -67,14 +79,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedTkl = new { id = "123" };
-            var response = new Dictionary<string, object> { { "tkl", expectedTkl } };
-            _mockQuerier.Setup(q => q.QueryAsync("name_ban.get", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { tkl = expectedTkl });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("name_ban.get", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _nameBan.GetAsync("badname");
 
             // Assert
-            Assert.Equal(expectedTkl, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("id", out var idElement));
+            Assert.Equal("123", idElement.GetString());
         }
     }
 }

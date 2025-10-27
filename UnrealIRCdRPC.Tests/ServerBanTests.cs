@@ -1,7 +1,9 @@
 using Moq;
+using System.Text.Json;
 using Xunit;
 using UnrealIRCdRPC;
 using UnrealIRCdRPC.Models;
+using System.Linq;
 
 namespace UnrealIRCdRPC.Tests
 {
@@ -21,8 +23,10 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedList = new[] { "ban1", "ban2" };
-            var response = new Dictionary<string, object> { { "list", expectedList } };
-            _mockQuerier.Setup(q => q.QueryAsync("server_ban.list", null, false)).ReturnsAsync(response);
+            var banObjects = expectedList.Select(name => new { name }).ToArray();
+            var jsonResponse = JsonSerializer.Serialize(new { list = banObjects });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("server_ban.list", null, false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _serverBan.GetAllAsync();
@@ -36,8 +40,9 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedTkl = new { type = "G", name = "*@badhost" };
-            var response = new Dictionary<string, object> { { "tkl", expectedTkl } };
-            _mockQuerier.Setup(q => q.QueryAsync("server_ban.add", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { tkl = expectedTkl });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("server_ban.add", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _serverBan.AddAsync("baduser", "kline", "1d", "spam");
@@ -53,14 +58,17 @@ namespace UnrealIRCdRPC.Tests
         public async Task DeleteAsync_CallsQueryWithCorrectParameters()
         {
             // Arrange
-            var response = new Dictionary<string, object> { { "tkl", "deleted" } };
-            _mockQuerier.Setup(q => q.QueryAsync("server_ban.del", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { tkl = "deleted" });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("server_ban.del", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _serverBan.DeleteAsync("baduser", "kline");
 
             // Assert
-            Assert.Equal("deleted", result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.String, result.Value.ValueKind);
+            Assert.Equal("deleted", result.Value.GetString());
             _mockQuerier.Verify(q => q.QueryAsync("server_ban.del", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -69,8 +77,9 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedTkl = new { type = "G", name = "*@badhost" };
-            var response = new Dictionary<string, object> { { "tkl", expectedTkl } };
-            _mockQuerier.Setup(q => q.QueryAsync("server_ban.get", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { tkl = expectedTkl });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("server_ban.get", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _serverBan.GetAsync("baduser", "kline");

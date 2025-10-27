@@ -2,6 +2,7 @@ using Moq;
 using Xunit;
 using UnrealIRCdRPC;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace UnrealIRCdRPC.Tests
 {
@@ -21,14 +22,19 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedResult = new { success = true };
+            var jsonResponse = JsonSerializer.Serialize(expectedResult);
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
             var sources = new List<string> { "opers", "errors" };
-            _mockQuerier.Setup(q => q.QueryAsync("log.subscribe", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            _mockQuerier.Setup(q => q.QueryAsync("log.subscribe", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _log.SubscribeAsync(sources);
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("success", out var successElement));
+            Assert.True(successElement.GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("log.subscribe", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -37,13 +43,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("log.unsubscribe", null, false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(expectedResult);
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("log.unsubscribe", null, false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _log.UnsubscribeAsync();
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("success", out var successElement));
+            Assert.True(successElement.GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("log.unsubscribe", null, false), Times.Once);
         }
 
@@ -52,14 +63,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedResult = new[] { new { message = "log entry" } };
+            var jsonResponse = JsonSerializer.Serialize(expectedResult);
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
             var sources = new List<string> { "opers" };
-            _mockQuerier.Setup(q => q.QueryAsync("log.get", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            _mockQuerier.Setup(q => q.QueryAsync("log.get", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _log.GetAllAsync(sources);
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Array, result.Value.ValueKind);
+            Assert.Equal(1, result.Value.GetArrayLength());
             _mockQuerier.Verify(q => q.QueryAsync("log.get", It.IsAny<object>(), false), Times.Once);
         }
     }

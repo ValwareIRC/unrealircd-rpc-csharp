@@ -2,6 +2,8 @@ using Moq;
 using Xunit;
 using UnrealIRCdRPC;
 using UnrealIRCdRPC.Models;
+using System.Text.Json;
+using System.Linq;
 
 namespace UnrealIRCdRPC.Tests
 {
@@ -21,8 +23,10 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedList = new[] { "server1", "server2" };
-            var response = new Dictionary<string, object> { { "list", expectedList } };
-            _mockQuerier.Setup(q => q.QueryAsync("server.list", null, false)).ReturnsAsync(response);
+            var serverObjects = expectedList.Select(name => new { name }).ToArray();
+            var jsonResponse = JsonSerializer.Serialize(new { list = serverObjects });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("server.list", null, false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _server.GetAllAsync();
@@ -35,9 +39,9 @@ namespace UnrealIRCdRPC.Tests
         public async Task GetAsync_ReturnsServer_WhenFound()
         {
             // Arrange
-            var expectedServer = new { name = "testserver" };
-            var response = new Dictionary<string, object> { { "server", expectedServer } };
-            _mockQuerier.Setup(q => q.QueryAsync("server.get", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { server = new { name = "testserver" } });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("server.get", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _server.GetAsync("testserver");
@@ -51,9 +55,9 @@ namespace UnrealIRCdRPC.Tests
         public async Task GetAsync_CallsQueryWithNullServer_WhenNoParameter()
         {
             // Arrange
-            var expectedServer = new { name = "localserver" };
-            var response = new Dictionary<string, object> { { "server", expectedServer } };
-            _mockQuerier.Setup(q => q.QueryAsync("server.get", null, false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { server = new { name = "localserver" } });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("server.get", null, false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _server.GetAsync();

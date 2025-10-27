@@ -2,6 +2,7 @@ using Moq;
 using Xunit;
 using UnrealIRCdRPC;
 using UnrealIRCdRPC.Models;
+using System.Text.Json;
 
 namespace UnrealIRCdRPC.Tests
 {
@@ -21,8 +22,9 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedList = new[] { "#channel1", "#channel2" };
-            var response = new Dictionary<string, object> { { "list", expectedList } };
-            _mockQuerier.Setup(q => q.QueryAsync("channel.list", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { list = expectedList });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("channel.list", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _channel.GetAllAsync(1);
@@ -35,9 +37,9 @@ namespace UnrealIRCdRPC.Tests
         public async Task GetAsync_ReturnsChannel_WhenFound()
         {
             // Arrange
-            var expectedChannel = new { name = "#testchannel" };
-            var response = new Dictionary<string, object> { { "channel", expectedChannel } };
-            _mockQuerier.Setup(q => q.QueryAsync("channel.get", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { channel = new { name = "#testchannel" } });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("channel.get", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _channel.GetAsync("#testchannel", 1);
@@ -51,14 +53,16 @@ namespace UnrealIRCdRPC.Tests
         public async Task SetModeAsync_CallsQueryWithCorrectParameters()
         {
             // Arrange
-            var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("channel.set_mode", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(new { success = true });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("channel.set_mode", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _channel.SetModeAsync("#channel", "+m", "nick");
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.True(result.Value.GetProperty("success").GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("channel.set_mode", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -66,14 +70,16 @@ namespace UnrealIRCdRPC.Tests
         public async Task SetTopicAsync_CallsQueryWithCorrectParameters()
         {
             // Arrange
-            var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("channel.set_topic", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(new { success = true });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("channel.set_topic", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _channel.SetTopicAsync("#channel", "New topic", "setter", "timestamp");
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.True(result.Value.GetProperty("success").GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("channel.set_topic", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -81,14 +87,16 @@ namespace UnrealIRCdRPC.Tests
         public async Task KickAsync_CallsQueryWithCorrectParameters()
         {
             // Arrange
-            var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("channel.kick", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(new { success = true });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("channel.kick", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _channel.KickAsync("#channel", "nick", "reason");
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.True(result.Value.GetProperty("success").GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("channel.kick", It.IsAny<object>(), false), Times.Once);
         }
     }

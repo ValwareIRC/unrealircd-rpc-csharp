@@ -2,6 +2,7 @@ using Moq;
 using Xunit;
 using UnrealIRCdRPC;
 using UnrealIRCdRPC.Models;
+using System.Text.Json;
 
 namespace UnrealIRCdRPC.Tests
 {
@@ -21,8 +22,9 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedList = new[] { "user1", "user2" };
-            var response = new Dictionary<string, object> { { "list", expectedList } };
-            _mockQuerier.Setup(q => q.QueryAsync("user.list", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { list = expectedList });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("user.list", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _user.GetAllAsync(2);
@@ -35,8 +37,9 @@ namespace UnrealIRCdRPC.Tests
         public async Task GetAllAsync_ThrowsException_WhenInvalidResponse()
         {
             // Arrange
-            var response = new Dictionary<string, object> { { "invalid", "data" } };
-            _mockQuerier.Setup(q => q.QueryAsync("user.list", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { invalid = "data" });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("user.list", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _user.GetAllAsync(2));
@@ -46,9 +49,9 @@ namespace UnrealIRCdRPC.Tests
         public async Task GetAsync_ReturnsClient_WhenFound()
         {
             // Arrange
-            var expectedClient = new { nick = "testuser" };
-            var response = new Dictionary<string, object> { { "client", expectedClient } };
-            _mockQuerier.Setup(q => q.QueryAsync("user.get", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { client = new { nick = "testuser" } });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("user.get", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _user.GetAsync("testuser", 2);
@@ -62,8 +65,9 @@ namespace UnrealIRCdRPC.Tests
         public async Task GetAsync_ReturnsNull_WhenNotFound()
         {
             // Arrange
-            var response = new Dictionary<string, object> { { "other", "data" } };
-            _mockQuerier.Setup(q => q.QueryAsync("user.get", It.IsAny<object>(), false)).ReturnsAsync(response);
+            var jsonResponse = JsonSerializer.Serialize(new { other = "data" });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("user.get", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _user.GetAsync("testuser", 2);
@@ -76,14 +80,16 @@ namespace UnrealIRCdRPC.Tests
         public async Task SetNickAsync_CallsQueryWithCorrectParameters()
         {
             // Arrange
-            var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("user.set_nick", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(new { success = true });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("user.set_nick", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _user.SetNickAsync("oldnick", "newnick");
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.True(result.Value.GetProperty("success").GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("user.set_nick", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -91,14 +97,16 @@ namespace UnrealIRCdRPC.Tests
         public async Task JoinAsync_CallsQueryWithCorrectParameters()
         {
             // Arrange
-            var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("user.join", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(new { success = true });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("user.join", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _user.JoinAsync("nick", "channel", "key", true);
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.True(result.Value.GetProperty("success").GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("user.join", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -106,14 +114,15 @@ namespace UnrealIRCdRPC.Tests
         public async Task KillAsync_CallsQueryWithCorrectParameters()
         {
             // Arrange
-            var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("user.kill", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
-
+            var jsonResponse = JsonSerializer.Serialize(new { success = true });
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("user.kill", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));;
             // Act
             var result = await _user.KillAsync("nick", "reason");
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.True(result.Value.GetProperty("success").GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("user.kill", It.IsAny<object>(), false), Times.Once);
         }
     }

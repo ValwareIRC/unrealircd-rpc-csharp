@@ -1,6 +1,7 @@
 using Moq;
 using Xunit;
 using UnrealIRCdRPC;
+using System.Text.Json;
 
 namespace UnrealIRCdRPC.Tests
 {
@@ -20,13 +21,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedResult = new { version = "6.0.6" };
-            _mockQuerier.Setup(q => q.QueryAsync("rpc.info", null, false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(expectedResult);
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("rpc.info", null, false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _rpc.InfoAsync();
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("version", out var versionElement));
+            Assert.Equal("6.0.6", versionElement.GetString());
         }
 
         [Fact]
@@ -34,13 +40,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("rpc.set_issuer", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(expectedResult);
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("rpc.set_issuer", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _rpc.SetIssuerAsync("testissuer");
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("success", out var successElement));
+            Assert.True(successElement.GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("rpc.set_issuer", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -49,13 +60,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("rpc.add_timer", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(expectedResult);
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("rpc.add_timer", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _rpc.AddTimerAsync("timer1", 5000, "user.get", new { nick = "test" }, 12345);
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("success", out var successElement));
+            Assert.True(successElement.GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("rpc.add_timer", It.IsAny<object>(), false), Times.Once);
         }
 
@@ -64,13 +80,18 @@ namespace UnrealIRCdRPC.Tests
         {
             // Arrange
             var expectedResult = new { success = true };
-            _mockQuerier.Setup(q => q.QueryAsync("rpc.del_timer", It.IsAny<object>(), false)).ReturnsAsync(expectedResult);
+            var jsonResponse = JsonSerializer.Serialize(expectedResult);
+            var response = JsonDocument.Parse(jsonResponse).RootElement;
+            _mockQuerier.Setup(q => q.QueryAsync("rpc.del_timer", It.IsAny<object>(), false)).Returns(Task.FromResult<JsonElement?>(response));
 
             // Act
             var result = await _rpc.DelTimerAsync("timer1");
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.NotNull(result);
+            Assert.Equal(JsonValueKind.Object, result.Value.ValueKind);
+            Assert.True(result.Value.TryGetProperty("success", out var successElement));
+            Assert.True(successElement.GetBoolean());
             _mockQuerier.Verify(q => q.QueryAsync("rpc.del_timer", It.IsAny<object>(), false), Times.Once);
         }
     }
