@@ -1,0 +1,33 @@
+# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+# Test results
+TestResults/
+*.trx
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet packages
+packages/
+*.nupkg
+
+# Logs
+*.log
+
+# Coverage
+*.coverage
+coverage.json
