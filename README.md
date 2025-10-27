@@ -1,5 +1,7 @@
 # UnrealIRCd RPC
 
+[![Build and Test](https://github.com/ValwareIRC/unrealircd-rpc-csharp/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/ValwareIRC/unrealircd-rpc-csharp/actions/workflows/build-and-test.yml)
+
 This allows .NET programs to control [UnrealIRCd](https://www.unrealircd.org/)
 via the [JSON-RPC interface](https://www.unrealircd.org/docs/JSON-RPC).
 
